@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "timestamp_utc": "2026-09-05T23:51:46.303894+00:00",
+  "experiment": "v1-eager-fp32-no-cache",
+  "smoke_only": true,
+  "config": {
+    "model": "openai-community/gpt2",
+    "revision": "main",
+    "device": "cpu",
+    "prompt": "Explain how a transformer computes attention.",
+    "prompt_tokens": 16,
+    "new_tokens": 4,
+    "batch_size": 1,
+    "runs": 3,
+    "warmup": 1,
+    "threads": 4,
+    "seed": 42,
+    "smoke": true,
+    "output": "results/smoke-cpu.json"
+  },
+  "model": {
+    "id": "random-tiny-gpt2-smoke-only",
+    "resolved_revision": null
+  },
+  "environment": {
+    "python": "3.13.3",
+    "platform": "macOS-26.3.1-arm64-arm-64bit-Mach-O",
+    "torch": "2.8.0",
+    "transformers": "4.56.2",
+    "cuda_runtime": null,
+    "device": "cpu",
+    "device_name": "arm",
+    "git_commit": null,
+    "torch_threads": 4
+  },
+  "input_ids_sha256": "9df1e28420ad24666df6780409e33239ee17850324f0022621a917bb4420cae2",
+  "summary": {
+    "ttft_median_ms": 1.7539580003358424,
+    "latency_mean_ms": 7.319555331681234,
+    "latency_p50_ms": 7.254249998368323,
+    "latency_p95_ms": 7.465712200792041,
+    "latency_p99_ms": 7.484508841007482,
+    "requests_per_second": 136.62032113777454,
+    "output_tokens_per_second": 546.4812845510982,
+    "decode_tokens_per_second": 545.9522220214982
+  },
+  "memory": {
+    "peak_cuda_allocated_bytes": null,
+    "peak_cuda_reserved_bytes": null
+  },
+  "telemetry": {
+    "scope": "whole device, including other processes; sampled across measured trials",
+    "sampling_interval_seconds": 0.05,
+    "mean_gpu_utilization_percent": null,
+    "peak_device_memory_used_bytes": null,
+    "unavailable_reason": "NVML telemetry requires NVIDIA CUDA",
+    "samples": []
+  },
+  "samples": [
+    {
+      "ttft_ms": 1.7539580003358424,
+      "latency_ms": 7.254249998368323,
+      "output_ids": [
+        [
+          77,
+          77,
+          77,
+          77
+        ]
+      ]
+    },
+    {
+      "ttft_ms": 1.7095829971367493,
+      "latency_ms": 7.489208001061343,
+      "output_ids": [
+        [
+          77,
+          77,
+          77,
+          77
+        ]
+      ]
+    },
+    {
+      "ttft_ms": 2.0101659902138636,
+      "latency_ms": 7.215207995614037,
+      "output_ids": [
+        [
+          77,
+          77,
+          77,
+          77
+        ]
+      ]
+    }
+  ]
+}
