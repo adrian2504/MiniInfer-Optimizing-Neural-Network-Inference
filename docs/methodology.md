@@ -1,16 +1,56 @@
-# Measurement protocol
+# How I measure performance
 
-- **TTFT:** wall-clock time from preloaded token IDs on the selected device through the first forward pass, argmax, and append, with a device synchronization. Excludes tokenization, transfer, model loading, warmup, networking, and queueing.
-- **Generation latency:** synchronized wall-clock time for all requested new tokens, including Python dispatch, the TTFT synchronization, argmax, and concatenation. Token IDs are copied to CPU after timing ends.
-- **Output tokens/sec:** total emitted tokens across measured batches divided by summed batch generation time, including prefill. Not the arithmetic mean of per-trial rates.
-- **Decode tokens/sec:** tokens after the first token divided by summed latency minus TTFT. Null for one-token output.
-- **Requests/sec:** completed sequences divided by summed batch latency. This serial benchmark does not measure a concurrent server's capacity.
-- **Percentiles:** linear interpolation of trial batch latencies. p95/p99 from a small sample are unstable; use larger run counts for published claims.
-- **CUDA memory:** peak allocated tensor memory and peak reserved allocator memory after warmup and peak-stat reset, including resident model weights. These differ from device-wide VRAM use.
-- **GPU utilization:** optional NVML polling every 50 ms over measured trials. NVIDIA's own underlying sampling window applies. Samples include other processes and inter-trial gaps; short runs may give few or unrepresentative readings. Missing NVML, unsupported device handles, or non-CUDA execution produces nulls and a reason. Telemetry polling may add overhead.
+The goal is to compare the same work before and after each change.
 
-Use a dedicated, otherwise idle GPU. Record power/clock settings, driver (`nvidia-smi`), model commit, dependency freeze, GPU model, and ambient competing load with published experiments. Keep model, prompt token count, seed, batch size, and generated token count fixed across comparisons. Separate warmup/compilation from measured trials. Repeat entire runs to characterize variability; do not pick the fastest trial.
+## What is timed?
 
-The baseline uses explicit eager attention and no cache, so it should be described as this controlled baseline, not as the fastest default Hugging Face configuration. Synthetic repeated prompts and forced output length isolate performance; use a separate held-out natural-text corpus for quality evaluation in Version 2.
+The model is loaded and the input tokens are already on the selected device before timing starts. Warmup runs happen first and aren't included in the results.
 
-Reference APIs: [PyTorch synchronization](https://docs.pytorch.org/docs/stable/generated/torch.cuda.synchronize), [CUDA memory metrics](https://docs.pytorch.org/docs/stable/cuda), and [Hugging Face caching](https://huggingface.co/docs/transformers/v4.50.0/en/cache_explanation).
+The timer includes model execution, picking the next token, appending it, and the Python work in the generation loop. It waits for GPU work to finish before recording the first-token and final times.
+
+Downloads, tokenization, model loading, input transfer, copying the final output to CPU, and writing JSON are outside the timer. Networking and queueing aren't part of this benchmark yet.
+
+## Metrics
+
+| Metric | Meaning |
+| --- | --- |
+| TTFT | Time through the first model pass, token selection, and append |
+| Generation latency | Time to generate all requested tokens in a batch |
+| Output tokens/sec | Total generated tokens divided by total generation time |
+| Decode tokens/sec | Tokens after the first token divided by total time after TTFT |
+| Requests/sec | Completed sequences divided by total batch generation time |
+| p50 / p95 / p99 | Latency values at the 50th, 95th, and 99th percentiles of measured batches |
+
+Rates use totals across trials, rather than averaging each trial's rate. Decode tokens/sec is `null` when only one token is generated.
+
+Percentiles use linear interpolation between sorted samples. A few runs aren't enough to make reliable claims about p95 or p99. Requests/sec here comes from serial batches; it doesn't measure concurrent server capacity.
+
+## Memory and GPU utilization
+
+CUDA reports two process-level peaks after warmup:
+
+- **Allocated memory:** memory used by PyTorch tensors, including the loaded model.
+- **Reserved memory:** memory held by PyTorch's allocator, including space it can reuse.
+
+Optional NVIDIA monitoring uses NVML to poll GPU utilization and whole-device memory every 50 ms. These readings can include other processes and gaps between trials. NVIDIA also has its own sampling window, so very short runs may not give useful utilization data. Polling can add some overhead.
+
+If a metric isn't available, the report saves `null` and a reason. CPU and MPS runs don't produce CUDA or NVIDIA readings.
+
+## Keeping comparisons fair
+
+- Use the same model revision, prompt length, output length, batch size, and seed.
+- Use the same GPU with other work stopped where possible.
+- Save the GPU model, driver, power and clock settings, software versions, and any competing load.
+- Keep warmup and compilation separate from measured runs.
+- Repeat whole experiments to see how much results vary. Keep all trials.
+- Save the JSON report and dependency versions so the experiment can be repeated.
+
+The default model revision is `main`, which can change. Use the resolved commit from a report with `--revision` for later comparisons.
+
+## What the baseline tells me
+
+The baseline explicitly uses eager attention, FP32, and no KV cache. CUDA TF32 is disabled. This gives me a controlled starting point for later changes.
+
+Inputs are repeated or trimmed to a fixed length, every batch item uses the same input, and generation runs for a fixed token count. That makes workloads comparable, but it doesn't represent varied real-world requests.
+
+The random-weight smoke model checks that the code runs. Version 2 quality comparisons will need a pretrained model and a separate held-out natural-text dataset.
