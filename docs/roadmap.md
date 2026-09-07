@@ -8,7 +8,11 @@ The code is built: eager FP32 generation without a KV cache, timing and memory r
 
 A CPU smoke result is saved. The remaining measurement is a pretrained CUDA run on a named GPU. That will be the reference for later speedups.
 
-## Version 2 — Optimization (next)
+## Version 2 — Optimization (code built; GPU experiments pending)
+
+The CLI now has compilation, precision, and quantization options, plus quality checks and a report comparison command. Follow the [Version 2 walkthrough](version-2.md).
+
+The experiment sequence is:
 
 1. Record the pretrained GPU baseline with a fixed model revision and workload.
 2. Compare eager execution with `torch.compile`. Record compilation cost separately.

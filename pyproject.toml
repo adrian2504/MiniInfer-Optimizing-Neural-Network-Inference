@@ -4,17 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "miniinfer"
-version = "0.1.0"
+version = "0.2.0"
 description = "Reproducible transformer inference experiments, from PyTorch to GPU kernels"
 requires-python = ">=3.11,<3.14"
 dependencies = ["torch==2.8.0", "transformers==4.56.2"]
 
 [project.optional-dependencies]
 gpu = ["nvidia-ml-py>=12,<14"]
+quantization = ["bitsandbytes==0.47.0", "accelerate==1.10.1"]
 dev = ["pytest>=8,<9"]
 
 [project.scripts]
 miniinfer = "miniinfer.benchmark:main"
+miniinfer-compare = "miniinfer.compare:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

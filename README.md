@@ -6,7 +6,7 @@
 
 I'm building this project to understand what happens when a transformer generates tokens, where the time and memory go, and which changes actually make it faster. I'll start with a simple PyTorch baseline and work through each optimization one at a time.
 
-The Version 1 baseline code is built, with tests and a saved CPU smoke run. The next part is Version 2: compilation, lower precision, and quantization. A real pretrained GPU baseline still needs to be measured before I can report speedups.
+The Version 1 baseline code is built, with tests and a saved CPU smoke run. Version 2 adds compilation, lower precision, quantization options, and FP32 quality comparisons. See the [Version 2 walkthrough](docs/version-2.md). A real pretrained GPU baseline still needs to be measured before I can report speedups.
 
 | Implementation | TTFT (ms) | Output tokens/sec | Peak CUDA allocated (GiB) | Speedup |
 | --- | ---: | ---: | ---: | ---: |
@@ -46,6 +46,9 @@ Save timings, metrics, and settings to JSON
 | File | What it does |
 | --- | --- |
 | [benchmark.py](src/miniinfer/benchmark.py) | Loads the model, runs generation, and writes results |
+| [optimization.py](src/miniinfer/optimization.py) | Loads precision and quantization variants |
+| [quality.py](src/miniinfer/quality.py) | Compares predictions with eager FP32 |
+| [compare.py](src/miniinfer/compare.py) | Compares matching experiment reports |
 | [metrics.py](src/miniinfer/metrics.py) | Calculates latency and throughput summaries |
 | [telemetry.py](src/miniinfer/telemetry.py) | Samples NVIDIA GPU utilization and memory when available |
 | [tests/](tests/) | Checks generation, metric calculations, and the CLI |
@@ -69,7 +72,7 @@ CPU, Apple Silicon MPS, and NVIDIA CUDA are supported. The offline smoke mode us
 
 ## 4. Optimization techniques
 
-Version 2 will compare three changes:
+Version 2 now supports three experiments:
 
 | Experiment | What I want to learn |
 | --- | --- |
@@ -77,7 +80,9 @@ Version 2 will compare three changes:
 | FP16 / BF16 | How do 16-bit formats affect speed, memory, and numerical results? |
 | INT8 / INT4 | How much memory can quantization save, and what does it cost in quality and speed? |
 
-I'll keep the workload fixed and record compilation time separately from later runs. Quality checks will use held-out text, perplexity (how well the model predicts that text), differences in model scores, and generated-token agreement with FP32.
+I'll keep the workload fixed. The first generation, which includes compilation when enabled, is recorded separately from later runs. Quality checks use held-out text, perplexity (how well the model predicts that text), differences in model scores, and generated-token agreement with FP32.
+
+Read the [Version 2 walkthrough](docs/version-2.md) for commands and how to interpret the results. The implementation is in place; pretrained GPU experiments are still pending.
 
 ## 5. Triton kernels
 

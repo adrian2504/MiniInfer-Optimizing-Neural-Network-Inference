@@ -4,7 +4,7 @@ The goal is to compare the same work before and after each change.
 
 ## What is timed?
 
-The model is loaded and the input tokens are already on the selected device before timing starts. Warmup runs happen first and aren't included in the results.
+The model is loaded and the input tokens are already on the selected device before timing starts. Version 2 records one first generation separately, then performs the requested warmup runs before measured trials. Neither phase is included in the steady-state summary.
 
 The timer includes model execution, picking the next token, appending it, and the Python work in the generation loop. It waits for GPU work to finish before recording the first-token and final times.
 
@@ -53,4 +53,10 @@ The baseline explicitly uses eager attention, FP32, and no KV cache. CUDA TF32 i
 
 Inputs are repeated or trimmed to a fixed length, every batch item uses the same input, and generation runs for a fixed token count. That makes workloads comparable, but it doesn't represent varied real-world requests.
 
-The random-weight smoke model checks that the code runs. Version 2 quality comparisons will need a pretrained model and a separate held-out natural-text dataset.
+The random-weight smoke model checks that the code runs. Version 2 quality comparisons use a pretrained model and a separate held-out natural-text dataset supplied with `--eval-text`. They run after performance measurements. See the [Version 2 walkthrough](version-2.md) for the loss calculation and sampling limits.
+
+## Version 2 startup and compilation
+
+The report separates wrapper setup, first-generation time, warmup time, and measured trials. First generation includes lazy compilation plus execution, so it is not a pure compiler timer. Compiler caches may be reused across processes. Dynamic shapes are enabled; compiled execution may contain graph breaks. New graph compilation during measured trials rejects the run. Compiler diagnostics use the pinned PyTorch 2.8 internal counters and need review when that dependency changes.
+
+Schema Version 2 adds optimization, startup, and optional quality fields. Rerun the FP32 baseline with Version 2 before using the comparison command. CUDA memory peaks are captured before quality evaluation and include allocations retained by the compiler or allocator after warmup.
