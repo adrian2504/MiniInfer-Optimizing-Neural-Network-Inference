@@ -60,3 +60,9 @@ The random-weight smoke model checks that the code runs. Version 2 quality compa
 The report separates wrapper setup, first-generation time, warmup time, and measured trials. First generation includes lazy compilation plus execution, so it is not a pure compiler timer. Compiler caches may be reused across processes. Dynamic shapes are enabled; compiled execution may contain graph breaks. New graph compilation during measured trials rejects the run. Compiler diagnostics use the pinned PyTorch 2.8 internal counters and need review when that dependency changes.
 
 Schema Version 2 adds optimization, startup, and optional quality fields. Rerun the FP32 baseline with Version 2 before using the comparison command. CUDA memory peaks are captured before quality evaluation and include allocations retained by the compiler or allocator after warmup.
+
+## Version 3 operation benchmark
+
+`miniinfer-kernel` writes a separate report schema for RMSNorm. It checks every requested implementation against an FP64 oracle before timing. First-call compilation and warmup are excluded from steady-state samples. CUDA uses events; CPU uses wall-clock timing. Each sample averages repeated calls, so p95 describes those averages, not individual requests. Inputs are reused without a cache flush, outputs are allocated per call, and measurement order is shuffled with a fixed seed.
+
+RMSNorm speedup is eager median operation time divided by candidate median operation time for the same shape, dtype, and input. These numbers cannot be substituted into the transformer generation table. See [Version 3](version-3.md) for the full protocol and tolerances.

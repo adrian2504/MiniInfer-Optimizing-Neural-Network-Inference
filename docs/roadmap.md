@@ -22,9 +22,11 @@ The experiment sequence is:
 
 Before calling this complete, save repeatable results and evaluate held-out text. Check perplexity, model-score differences, and greedy-token agreement with FP32.
 
-## Version 3 — A Triton kernel
+## Version 3 — A Triton kernel (code built; CUDA verification pending)
 
-Implement RMSNorm in PyTorch, compiled PyTorch, and Triton. Check correctness across shapes and data types before timing it.
+RMSNorm is implemented in PyTorch, compiled PyTorch, and Triton. The standalone benchmark checks each shape and dtype against an FP64 reference before timing it. Tests cover numerical edge cases, irregular widths, and input validation.
+
+Follow the [Version 3 walkthrough](version-3.md). Remaining work is to run the CUDA correctness tests and save repeated GPU measurements.
 
 Report kernel timings separately. Measure generation speed only after integrating the kernel into a model that uses RMSNorm.
 

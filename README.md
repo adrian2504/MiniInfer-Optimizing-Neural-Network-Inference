@@ -6,7 +6,7 @@
 
 I'm building this project to understand what happens when a transformer generates tokens, where the time and memory go, and which changes actually make it faster. I'll start with a simple PyTorch baseline and work through each optimization one at a time.
 
-The Version 1 baseline code is built, with tests and a saved CPU smoke run. Version 2 adds compilation, lower precision, quantization options, and FP32 quality comparisons. See the [Version 2 walkthrough](docs/version-2.md). A real pretrained GPU baseline still needs to be measured before I can report speedups.
+The Version 1 baseline code is built, with tests and a saved CPU smoke run. Version 2 adds compilation, lower precision, quantization options, and FP32 quality comparisons. See the [Version 2 walkthrough](docs/version-2.md). Version 3 adds a standalone RMSNorm kernel experiment; see the [Version 3 walkthrough](docs/version-3.md). GPU measurements are still pending.
 
 | Implementation | TTFT (ms) | Output tokens/sec | Peak CUDA allocated (GiB) | Speedup |
 | --- | ---: | ---: | ---: | ---: |
@@ -52,6 +52,8 @@ Save timings, metrics, and settings to JSON
 | [metrics.py](src/miniinfer/metrics.py) | Calculates latency and throughput summaries |
 | [telemetry.py](src/miniinfer/telemetry.py) | Samples NVIDIA GPU utilization and memory when available |
 | [tests/](tests/) | Checks generation, metric calculations, and the CLI |
+| [kernels/](src/miniinfer/kernels/) | PyTorch and Triton RMSNorm implementations |
+| [kernel_benchmark.py](src/miniinfer/kernel_benchmark.py) | Checks and times standalone RMSNorm |
 | [results/](results/) | Stores experiment reports |
 
 ## 3. Baseline
@@ -86,11 +88,13 @@ Read the [Version 2 walkthrough](docs/version-2.md) for commands and how to inte
 
 ## 5. Triton kernels
 
-Version 3 will start with RMSNorm, an operation that rescales a vector using its root mean square.
+Version 3 implements RMSNorm, which rescales each row using its root mean square and a learned weight vector.
 
-I'll write a PyTorch reference, try `torch.compile`, and then implement it in Triton. First I'll check that the outputs agree within a chosen tolerance across input sizes and data types. Then I'll measure kernel latency.
+There are three paths: a PyTorch reference, the same math with `torch.compile`, and a custom Triton kernel. They use FP32 arithmetic internally and return the input dtype. A separate `miniinfer-kernel` command checks correctness before timing each shape and dtype.
 
-A faster RMSNorm kernel only improves generation if it is integrated into a model that uses it. I'll measure those two results separately. CUDA C++ can be a later extension.
+CPU tests and a compiled CPU sweep can run locally. Triton execution and GPU results still need CUDA verification. The kernel isn't integrated into a model, so its timings don't represent generation speedups. CUDA C++ remains a possible later extension.
+
+Read the [Version 3 walkthrough](docs/version-3.md) for the formula, kernel design, limits, and commands.
 
 ## 6. KV cache
 
