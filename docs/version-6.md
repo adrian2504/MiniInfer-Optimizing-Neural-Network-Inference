@@ -77,7 +77,7 @@ ncu --profile-from-start off --set full --launch-count 1 \
 
 Nsight Compute provides hardware counters for an individual kernel. Inspect memory throughput, compute throughput, occupancy, and resource usage. Its collection and replay costs make it unsuitable as the source of end-to-end latency claims. GPU counter access may depend on the cloud machine's configuration.
 
-The NVIDIA capture paths require NVIDIA hardware and installed Nsight tools; they haven't been executed on this Mac.
+The NVIDIA capture paths require NVIDIA hardware and installed Nsight tools. The CUDA test suite has been verified on Runpod, but these Nsight captures still need to be run separately because Runpod does not automatically include the Nsight tools in every template.
 
 ## Record a conclusion
 
