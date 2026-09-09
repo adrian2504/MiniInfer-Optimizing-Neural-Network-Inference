@@ -4,12 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "miniinfer"
-version = "0.3.0"
+version = "0.6.0"
 description = "Reproducible transformer inference experiments, from PyTorch to GPU kernels"
 requires-python = ">=3.11,<3.14"
 dependencies = ["torch==2.8.0", "transformers==4.56.2"]
 
 [project.optional-dependencies]
+server = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "httpx>=0.27,<1"]
+plots = ["matplotlib>=3.9,<4"]
 gpu = ["nvidia-ml-py>=12,<14"]
 kernels = ["triton==3.4.0; sys_platform == 'linux'"]
 quantization = ["bitsandbytes==0.47.0", "accelerate==1.10.1"]
@@ -17,6 +19,11 @@ dev = ["pytest>=8,<9"]
 
 [project.scripts]
 miniinfer = "miniinfer.benchmark:main"
+miniinfer-serve = "miniinfer.server:main"
+miniinfer-load = "miniinfer.load_test:main"
+miniinfer-profile = "miniinfer.profiling:main"
+miniinfer-cache-sweep = "miniinfer.cache_sweep:main"
+miniinfer-cache-plot = "miniinfer.cache_plot:main"
 miniinfer-kernel = "miniinfer.kernel_benchmark:main"
 miniinfer-compare = "miniinfer.compare:main"
 

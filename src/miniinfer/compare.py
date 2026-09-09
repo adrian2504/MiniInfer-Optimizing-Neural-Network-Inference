@@ -13,6 +13,10 @@ def compare_reports(baseline, candidate):
     optimization = baseline["optimization"]
     if (optimization["execution"], optimization["dtype"], optimization["quantization"]) != ("eager", "fp32", "none"):
         raise ValueError("The baseline must use eager FP32 without quantization")
+    if optimization.get("kv_cache", False):
+        raise ValueError("The baseline must have KV caching disabled")
+    if candidate["optimization"].get("kv_cache", False) and not (candidate.get("cache_validation") or {}).get("passed"):
+        raise ValueError("The cached candidate must pass token parity validation")
     fields = {
         "config": ("prompt_tokens", "new_tokens", "batch_size", "seed", "threads", "runs", "warmup"),
         "environment": ("device", "device_name", "platform", "python", "torch", "transformers", "cuda_runtime", "torch_threads", "git_commit"),

@@ -1,4 +1,4 @@
-"""Compare inference optimizations using fixed-length decoding without a KV cache."""
+"""Compare inference optimizations using fixed-length decoding and an optional KV cache."""
 
 import argparse
 from datetime import datetime, timezone
@@ -21,37 +21,7 @@ from miniinfer.optimization import load_model, optimization_metadata, validate_o
 from miniinfer.quality import prepare_evaluation, save_candidate, compare_quality
 
 
-def synchronize(device):
-    if device.type == "cuda":
-        torch.cuda.synchronize(device)
-    elif device.type == "mps":
-        torch.mps.synchronize()
-
-
-@torch.inference_mode()
-def generate_trial(model, input_ids, new_tokens):
-    if new_tokens < 1:
-        raise ValueError("new_tokens must be positive")
-    device = input_ids.device
-    sequence = input_ids
-    synchronize(device)
-    start = time.perf_counter()
-    first_token_time = None
-    for step in range(new_tokens):
-        output = model(input_ids=sequence, use_cache=False)
-        token = output.logits[:, -1, :].argmax(dim=-1, keepdim=True)
-        sequence = torch.cat((sequence, token), dim=1)
-        del output
-        if step == 0:
-            synchronize(device)
-            first_token_time = time.perf_counter()
-    synchronize(device)
-    end = time.perf_counter()
-    return {
-        "ttft_ms": (first_token_time - start) * 1000,
-        "latency_ms": (end - start) * 1000,
-        "output_ids": sequence[:, input_ids.shape[1]:].cpu().tolist(),
-    }
+from miniinfer.generation import generate_trial, synchronize
 
 
 def git_revision():
@@ -77,6 +47,8 @@ def run(args):
         raise ValueError("CUDA requested but unavailable; use --device cpu for a smoke check")
     if device.type == "mps" and not torch.backends.mps.is_available():
         raise ValueError("MPS requested but unavailable")
+    if args.kv_cache and args.compile:
+        raise ValueError("Version 4 compares dynamic caching in eager mode; omit --compile")
     validate_optimization(args, device)
     if args.eval_text:
         args.check_quality = True
@@ -107,6 +79,7 @@ def run(args):
         raise ValueError(f"Prompt plus output exceeds model context limit {context_limit}")
     evaluation = prepare_evaluation(args, tokenizer, context_limit) if args.check_quality else None
     optimization = optimization_metadata(args, model)
+    optimization["kv_cache"] = args.kv_cache
     ids = ids.repeat(args.batch_size, 1).to(device)
     compile_before = compiler_snapshot() if args.compile else None
     setup_start = time.perf_counter()
@@ -115,17 +88,17 @@ def run(args):
         model = torch.compile(model, backend="inductor", dynamic=True)
     synchronize(device)
     setup_ms = (time.perf_counter() - setup_start) * 1000
-    first_run = generate_trial(model, ids, args.new_tokens)
+    first_run = generate_trial(model, ids, args.new_tokens, kv_cache=args.kv_cache)
     warmup_start = time.perf_counter()
     for _ in range(args.warmup):
-        generate_trial(model, ids, args.new_tokens)
+        generate_trial(model, ids, args.new_tokens, kv_cache=args.kv_cache)
     synchronize(device)
     warmup_ms = (time.perf_counter() - warmup_start) * 1000
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
     compile_warm = compiler_snapshot() if args.compile else None
     with GpuSampler(device) as sampler:
-        samples = [generate_trial(model, ids, args.new_tokens) for _ in range(args.runs)]
+        samples = [generate_trial(model, ids, args.new_tokens, kv_cache=args.kv_cache) for _ in range(args.runs)]
     if args.compile:
         compile_after = compiler_snapshot()
         if compile_after["unique_graphs"] != compile_warm["unique_graphs"]:
@@ -138,7 +111,7 @@ def run(args):
     report = {
         "schema_version": 2,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "experiment": f"v2-{optimization['execution']}-{args.dtype}-{args.quantization}-no-cache",
+        "experiment": f"v4-{optimization['execution']}-{args.dtype}-{args.quantization}-{'cache' if args.kv_cache else 'no-cache'}",
         "optimization": optimization,
         "startup": {
             "wrapper_setup_ms": setup_ms,
@@ -167,6 +140,15 @@ def run(args):
         "samples": samples,
     }
     # Snapshot memory and timing above before quality work or loading a reference.
+    report["cache_validation"] = None
+    if args.kv_cache:
+        uncached = generate_trial(model, ids, args.new_tokens)
+        if any(sample["output_ids"] != uncached["output_ids"] for sample in samples):
+            raise ValueError("Cached and uncached output tokens differ; no validated cache report was saved")
+        report["cache_validation"] = {
+            "passed": True, "reference": "same-model-same-dtype-uncached",
+            "trials_checked": len(samples), "reference_output_ids": uncached["output_ids"],
+        }
     report["quality"] = None
     if evaluation:
         sequences, dataset = evaluation
@@ -197,8 +179,9 @@ def run(args):
     return report
 
 
-def main():
+def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--kv-cache", action="store_true", help="Prefill once, then reuse attention keys and values")
     parser.add_argument("--dtype", choices=["fp32", "fp16", "bf16"], default="fp32")
     parser.add_argument("--compile", action="store_true", help="Compile the model with TorchInductor")
     parser.add_argument("--quantization", choices=["none", "int8", "int4"], default="none",
@@ -220,6 +203,11 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--smoke", action="store_true", help="Offline random tiny model; no performance claims")
     parser.add_argument("--output", type=Path, default=Path("results") / f"baseline-{time.time_ns()}.json")
+    return parser
+
+
+def main():
+    parser = build_parser()
     args = parser.parse_args()
     try:
         report = run(args)

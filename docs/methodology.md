@@ -66,3 +66,19 @@ Schema Version 2 adds optimization, startup, and optional quality fields. Rerun 
 `miniinfer-kernel` writes a separate report schema for RMSNorm. It checks every requested implementation against an FP64 oracle before timing. First-call compilation and warmup are excluded from steady-state samples. CUDA uses events; CPU uses wall-clock timing. Each sample averages repeated calls, so p95 describes those averages, not individual requests. Inputs are reused without a cache flush, outputs are allocated per call, and measurement order is shuffled with a fixed seed.
 
 RMSNorm speedup is eager median operation time divided by candidate median operation time for the same shape, dtype, and input. These numbers cannot be substituted into the transformer generation table. See [Version 3](version-3.md) for the full protocol and tolerances.
+
+## Version 4 cache comparisons
+
+Cached generation includes fresh cache construction, initial mask/position creation, and prefill in TTFT. Later mask and position updates are included in total latency. The cache is never reused between trials. Only the prompt is processed in full; later forward passes receive one token.
+
+Final K/V tensor bytes are counted after timing, separately from CUDA allocator peaks. Final cache length is prompt length plus output length minus one, because the last generated token hasn't been processed. This is live tensor size, not peak cache allocation during growth.
+
+After measured memory readings are captured, every cached trial is checked against an uncached run of the same model and dtype. A mismatch prevents saving a validated report. The optional held-out quality comparison still uses eager uncached FP32.
+
+The sweep isolates each mode and length in a fresh process, resolves one pretrained model revision, and keeps FP32 settings fixed. Plots use saved p50 generation latency, median TTFT, final K/V bytes, and peak CUDA allocated memory. Missing CUDA values remain unavailable. See [Version 4](version-4.md) for commands and limits.
+
+## Versions 5 and 6
+
+Server requests report queue delay, model batch latency, model TTFT, and server completion time. Load tests measure full-response HTTP latency with closed-loop concurrency; successful rates exclude failures, which remain in raw samples. A periodic metrics request samples whole-device NVIDIA utilization and memory when available.
+
+Profiling runs are separate from benchmarks. Warmup precedes tracing. Operator self times and allocation deltas help inspect execution but don't establish end-to-end speedup or a hardware bottleneck. External Nsight capture disables the PyTorch profiler and brackets only the post-warmup workload. See [serving](version-5.md) and [profiling](version-6.md) for definitions and limitations.

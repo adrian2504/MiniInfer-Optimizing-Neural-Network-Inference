@@ -1,0 +1,180 @@
+{
+  "schema_version": 2,
+  "timestamp_utc": "2026-09-08T10:50:34.338610+00:00",
+  "experiment": "v4-eager-fp32-none-no-cache",
+  "optimization": {
+    "execution": "eager",
+    "dtype": "fp32",
+    "quantization": "none",
+    "quantization_config": null,
+    "compile_backend": null,
+    "compile_dynamic": null,
+    "parameter_dtypes": [
+      "torch.float32"
+    ],
+    "optional_packages": {
+      "bitsandbytes": null,
+      "accelerate": null,
+      "triton": null
+    },
+    "kv_cache": false
+  },
+  "startup": {
+    "wrapper_setup_ms": 0.004250003257766366,
+    "first_generation_ms": 11.898874974576756,
+    "first_ttft_ms": 3.571916982764378,
+    "warmup_total_ms": 19.646957982331514,
+    "note": "First generation includes lazy compilation when enabled, plus execution; not pure compile time. Disk compiler caches may be reused."
+  },
+  "smoke_only": true,
+  "config": {
+    "kv_cache": false,
+    "dtype": "fp32",
+    "compile": false,
+    "quantization": "none",
+    "check_quality": false,
+    "eval_text": null,
+    "eval_tokens": 128,
+    "eval_samples": 4,
+    "model": "openai-community/gpt2",
+    "revision": "main",
+    "device": "cpu",
+    "prompt": "Explain how a transformer computes attention.",
+    "prompt_tokens": 128,
+    "new_tokens": 4,
+    "batch_size": 1,
+    "runs": 5,
+    "warmup": 2,
+    "threads": 4,
+    "seed": 42,
+    "smoke": true,
+    "output": "results/cache-smoke-cpu/128-uncached.json"
+  },
+  "model": {
+    "id": "random-tiny-gpt2-smoke-only",
+    "resolved_revision": null
+  },
+  "environment": {
+    "python": "3.13.3",
+    "platform": "macOS-26.3.1-arm64-arm-64bit-Mach-O",
+    "torch": "2.8.0",
+    "transformers": "4.56.2",
+    "cuda_runtime": null,
+    "device": "cpu",
+    "device_name": "arm",
+    "git_commit": "be23ef5e1440a1b5732c447601594296cacf3c80",
+    "torch_threads": 4
+  },
+  "input_ids_sha256": "6d7db52655b3b46022de220bdf2ecc761f8d4c8df9b594dd10a00ae5ac936329",
+  "summary": {
+    "ttft_median_ms": 2.1611250122077763,
+    "latency_mean_ms": 10.052458208519965,
+    "latency_p50_ms": 10.091290983837098,
+    "latency_p95_ms": 10.58087560813874,
+    "latency_p99_ms": 10.596642326563597,
+    "requests_per_second": 99.47815541799015,
+    "output_tokens_per_second": 397.9126216719606,
+    "decode_tokens_per_second": 382.9848316134548
+  },
+  "memory": {
+    "peak_cuda_allocated_bytes": null,
+    "peak_cuda_reserved_bytes": null
+  },
+  "telemetry": {
+    "scope": "whole device, including other processes; sampled across measured trials",
+    "sampling_interval_seconds": 0.05,
+    "mean_gpu_utilization_percent": null,
+    "peak_device_memory_used_bytes": null,
+    "unavailable_reason": "NVML telemetry requires NVIDIA CUDA",
+    "samples": []
+  },
+  "samples": [
+    {
+      "ttft_ms": 1.973041013116017,
+      "latency_ms": 9.725666022859514,
+      "output_ids": [
+        [
+          46,
+          46,
+          46,
+          46
+        ]
+      ],
+      "cache": {
+        "enabled": false,
+        "sequence_length": 0,
+        "tensor_bytes": 0
+      }
+    },
+    {
+      "ttft_ms": 2.486249984940514,
+      "latency_ms": 10.091290983837098,
+      "output_ids": [
+        [
+          46,
+          46,
+          46,
+          46
+        ]
+      ],
+      "cache": {
+        "enabled": false,
+        "sequence_length": 0,
+        "tensor_bytes": 0
+      }
+    },
+    {
+      "ttft_ms": 2.1150830143596977,
+      "latency_ms": 10.502042016014457,
+      "output_ids": [
+        [
+          46,
+          46,
+          46,
+          46
+        ]
+      ],
+      "cache": {
+        "enabled": false,
+        "sequence_length": 0,
+        "tensor_bytes": 0
+      }
+    },
+    {
+      "ttft_ms": 2.3607500188518316,
+      "latency_ms": 10.600584006169811,
+      "output_ids": [
+        [
+          46,
+          46,
+          46,
+          46
+        ]
+      ],
+      "cache": {
+        "enabled": false,
+        "sequence_length": 0,
+        "tensor_bytes": 0
+      }
+    },
+    {
+      "ttft_ms": 2.1611250122077763,
+      "latency_ms": 9.342708013718948,
+      "output_ids": [
+        [
+          46,
+          46,
+          46,
+          46
+        ]
+      ],
+      "cache": {
+        "enabled": false,
+        "sequence_length": 0,
+        "tensor_bytes": 0
+      }
+    }
+  ],
+  "cache_validation": null,
+  "quality": null
+}

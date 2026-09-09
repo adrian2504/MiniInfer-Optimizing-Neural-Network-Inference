@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "experiment": "v4-kv-cache-length-sweep",
+  "timestamp_utc": "2026-09-08T10:50:36.495703+00:00",
+  "smoke_only": true,
+  "model": {
+    "id": "random-tiny-gpt2-smoke-only",
+    "resolved_revision": null
+  },
+  "environment": {
+    "python": "3.13.3",
+    "platform": "macOS-26.3.1-arm64-arm-64bit-Mach-O",
+    "torch": "2.8.0",
+    "transformers": "4.56.2",
+    "cuda_runtime": null,
+    "device": "cpu",
+    "device_name": "arm",
+    "git_commit": "be23ef5e1440a1b5732c447601594296cacf3c80",
+    "torch_threads": 4
+  },
+  "config": {
+    "model": "openai-community/gpt2",
+    "revision": "main",
+    "device": "cpu",
+    "lengths": [
+      8,
+      32,
+      128
+    ],
+    "new_tokens": 4,
+    "batch_size": 1,
+    "runs": 5,
+    "warmup": 2,
+    "threads": 4,
+    "seed": 42,
+    "prompt": "Explain how a transformer computes attention.",
+    "smoke": true,
+    "no_plots": false,
+    "output_dir": "results/cache-smoke-cpu"
+  },
+  "context_limit": 256,
+  "cases": [
+    {
+      "prompt_tokens": 8,
+      "run_order": [
+        "cached",
+        "uncached"
+      ],
+      "comparison": {
+        "smoke_only": true,
+        "candidate": {
+          "execution": "eager",
+          "dtype": "fp32",
+          "quantization": "none",
+          "quantization_config": null,
+          "compile_backend": null,
+          "compile_dynamic": null,
+          "parameter_dtypes": [
+            "torch.float32"
+          ],
+          "optional_packages": {
+            "bitsandbytes": null,
+            "accelerate": null,
+            "triton": null
+          },
+          "kv_cache": true
+        },
+        "output_throughput_speedup": 1.8239989460042259,
+        "latency_speedup": 1.8239989460042259,
+        "ttft_speedup": 1.6904639831809143,
+        "cuda_allocated_memory_ratio": null,
+        "baseline_first_generation_ms": 9.237833000952378,
+        "candidate_first_generation_ms": 6.016291998093948,
+        "quality": null,
+        "note": "Ratios describe these runs, not statistical significance. Smoke runs do not establish GPU speedups. Quality is null unless requested."
+      },
+      "cached": {
+        "report_file": "8-cached.json",
+        "summary": {
+          "ttft_median_ms": 1.0657079983502626,
+          "latency_mean_ms": 4.055466596037149,
+          "latency_p50_ms": 4.091332986718044,
+          "latency_p95_ms": 4.236350004794076,
+          "latency_p99_ms": 4.2479700047988445,
+          "requests_per_second": 246.58075126969672,
+          "output_tokens_per_second": 986.3230050787869,
+          "decode_tokens_per_second": 1018.3932015899243
+        },
+        "memory": {
+          "peak_cuda_allocated_bytes": null,
+          "peak_cuda_reserved_bytes": null
+        },
+        "cache": {
+          "enabled": true,
+          "sequence_length": 11,
+          "tensor_bytes": 11264
+        }
+      },
+      "uncached": {
+        "report_file": "8-uncached.json",
+        "summary": {
+          "ttft_median_ms": 1.8015409877989441,
+          "latency_mean_ms": 7.397166796727106,
+          "latency_p50_ms": 7.635542016942054,
+          "latency_p95_ms": 7.793050195323303,
+          "latency_p99_ms": 7.796343636000529,
+          "requests_per_second": 135.1868935066399,
+          "output_tokens_per_second": 540.7475740265596,
+          "decode_tokens_per_second": 543.5914892985095
+        },
+        "memory": {
+          "peak_cuda_allocated_bytes": null,
+          "peak_cuda_reserved_bytes": null
+        },
+        "cache": {
+          "enabled": false,
+          "sequence_length": 0,
+          "tensor_bytes": 0
+        }
+      }
+    },
+    {
+      "prompt_tokens": 32,
+      "run_order": [
+        "cached",
+        "uncached"
+      ],
+      "comparison": {
+        "smoke_only": true,
+        "candidate": {
+          "execution": "eager",
+          "dtype": "fp32",
+          "quantization": "none",
+          "quantization_config": null,
+          "compile_backend": null,
+          "compile_dynamic": null,
+          "parameter_dtypes": [
+            "torch.float32"
+          ],
+          "optional_packages": {
+            "bitsandbytes": null,
+            "accelerate": null,
+            "triton": null
+          },
+          "kv_cache": true
+        },
+        "output_throughput_speedup": 1.702374227032526,
+        "latency_speedup": 1.702374227032526,
+        "ttft_speedup": 1.553595598730749,
+        "cuda_allocated_memory_ratio": null,
+        "baseline_first_generation_ms": 9.114499989664182,
+        "candidate_first_generation_ms": 6.271333986660466,
+        "quality": null,
+        "note": "Ratios describe these runs, not statistical significance. Smoke runs do not establish GPU speedups. Quality is null unless requested."
+      },
+      "cached": {
+        "report_file": "32-cached.json",
+        "summary": {
+          "ttft_median_ms": 1.1412500170990825,
+          "latency_mean_ms": 4.3247833964414895,
+          "latency_p50_ms": 4.19504102319479,
+          "latency_p95_ms": 4.9723749805707484,
+          "latency_p99_ms": 5.119874976808205,
+          "requests_per_second": 231.22545300715365,
+          "output_tokens_per_second": 924.9018120286146,
+          "decode_tokens_per_second": 1005.5865705759012
+        },
+        "memory": {
+          "peak_cuda_allocated_bytes": null,
+          "peak_cuda_reserved_bytes": null
+        },
+        "cache": {
+          "enabled": true,
+          "sequence_length": 35,
+          "tensor_bytes": 35840
+        }
+      },
+      "uncached": {
+        "report_file": "32-uncached.json",
+        "summary": {
+          "ttft_median_ms": 1.7730410036165267,
+          "latency_mean_ms": 7.362399791600183,
+          "latency_p50_ms": 7.135416002711281,
+          "latency_p95_ms": 8.025107980938628,
+          "latency_p99_ms": 8.133587978081778,
+          "requests_per_second": 135.82527821171942,
+          "output_tokens_per_second": 543.3011128468777,
+          "decode_tokens_per_second": 538.4610722417694
+        },
+        "memory": {
+          "peak_cuda_allocated_bytes": null,
+          "peak_cuda_reserved_bytes": null
+        },
+        "cache": {
+          "enabled": false,
+          "sequence_length": 0,
+          "tensor_bytes": 0
+        }
+      }
+    },
+    {
+      "prompt_tokens": 128,
+      "run_order": [
+        "uncached",
+        "cached"
+      ],
+      "comparison": {
+        "smoke_only": true,
+        "candidate": {
+          "execution": "eager",
+          "dtype": "fp32",
+          "quantization": "none",
+          "quantization_config": null,
+          "compile_backend": null,
+          "compile_dynamic": null,
+          "parameter_dtypes": [
+            "torch.float32"
+          ],
+          "optional_packages": {
+            "bitsandbytes": null,
+            "accelerate": null,
+            "triton": null
+          },
+          "kv_cache": true
+        },
+        "output_throughput_speedup": 2.251852889861444,
+        "latency_speedup": 2.251852889861444,
+        "ttft_speedup": 1.5398111886155685,
+        "cuda_allocated_memory_ratio": null,
+        "baseline_first_generation_ms": 11.898874974576756,
+        "candidate_first_generation_ms": 6.969125010073185,
+        "quality": null,
+        "note": "Ratios describe these runs, not statistical significance. Smoke runs do not establish GPU speedups. Quality is null unless requested."
+      },
+      "uncached": {
+        "report_file": "128-uncached.json",
+        "summary": {
+          "ttft_median_ms": 2.1611250122077763,
+          "latency_mean_ms": 10.052458208519965,
+          "latency_p50_ms": 10.091290983837098,
+          "latency_p95_ms": 10.58087560813874,
+          "latency_p99_ms": 10.596642326563597,
+          "requests_per_second": 99.47815541799015,
+          "output_tokens_per_second": 397.9126216719606,
+          "decode_tokens_per_second": 382.9848316134548
+        },
+        "memory": {
+          "peak_cuda_allocated_bytes": null,
+          "peak_cuda_reserved_bytes": null
+        },
+        "cache": {
+          "enabled": false,
+          "sequence_length": 0,
+          "tensor_bytes": 0
+        }
+      },
+      "cached": {
+        "report_file": "128-cached.json",
+        "summary": {
+          "ttft_median_ms": 1.4035000058356673,
+          "latency_mean_ms": 4.464083001948893,
+          "latency_p50_ms": 4.539832996670157,
+          "latency_p95_ms": 4.5885332161560655,
+          "latency_p99_ms": 4.594606654718518,
+          "requests_per_second": 224.010171756087,
+          "output_tokens_per_second": 896.040687024348,
+          "decode_tokens_per_second": 995.0442797979636
+        },
+        "memory": {
+          "peak_cuda_allocated_bytes": null,
+          "peak_cuda_reserved_bytes": null
+        },
+        "cache": {
+          "enabled": true,
+          "sequence_length": 131,
+          "tensor_bytes": 134144
+        }
+      }
+    }
+  ]
+}

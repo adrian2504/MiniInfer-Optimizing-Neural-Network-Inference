@@ -1,7 +1,5 @@
 # Roadmap
 
-I'm working through one version at a time so I can understand what each change does.
-
 ## Version 1 — Baseline
 
 The code is built: eager FP32 generation without a KV cache, timing and memory reports, an offline smoke mode, tests, and CPU CI.
@@ -30,21 +28,23 @@ Follow the [Version 3 walkthrough](version-3.md). Remaining work is to run the C
 
 Report kernel timings separately. Measure generation speed only after integrating the kernel into a model that uses RMSNorm.
 
-## Version 4 — KV cache
+## Version 4 — KV cache (code built; GPU experiments pending)
 
-Add cached decoding and check that it produces the same tokens as the uncached path. Plot latency and memory across prompt lengths of 128, 256, 512, 1024, and 2048 tokens.
+Cached decoding, token-parity checks, and the prompt-length sweep are built. A CPU smoke sweep with plots is saved. See the [Version 4 walkthrough](version-4.md).
+
+Remaining work is to run repeated pretrained GPU experiments across prompt lengths of 128, 256, 512, 1024, and 2048 tokens.
 
 Use a model whose context window fits the prompt plus output, and test the context limit.
 
-## Version 5 — Inference server
+## Version 5 — Inference server (code built; GPU load experiments pending)
 
-Add FastAPI, a bounded request queue, dynamic batching, and the `/baseline`, `/optimized`, `/benchmark`, and `/metrics` routes.
+FastAPI, a bounded queue, compatible-request batching, and all four routes are implemented. The load tester supports 1, 10, 50, and 100 clients. CPU tests cover lifecycle, overload, cancellation, and generation. See [Version 5](version-5.md).
 
 Test 1, 10, 50, and 100 concurrent clients. Measure queueing time, latency percentiles, throughput, and GPU utilization. Check cancellation and behavior when the queue fills up.
 
-## Version 6 — Profiling
+## Version 6 — Profiling (tools built; NVIDIA captures pending)
 
-Use PyTorch Profiler, Nsight Systems, and Nsight Compute to investigate the results. Save traces and explain bottlenecks using evidence from them.
+PyTorch traces, operator summaries, and observation tables are implemented and checked on CPU. The external capture mode and Nsight commands are ready for NVIDIA verification. See [Version 6](version-6.md).
 
 Run profiling separately from benchmarks, then repeat the comparisons to check that the conclusions hold.
 

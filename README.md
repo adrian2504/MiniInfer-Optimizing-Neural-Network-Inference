@@ -6,7 +6,7 @@
 
 I'm building this project to understand what happens when a transformer generates tokens, where the time and memory go, and which changes actually make it faster. I'll start with a simple PyTorch baseline and work through each optimization one at a time.
 
-The Version 1 baseline code is built, with tests and a saved CPU smoke run. Version 2 adds compilation, lower precision, quantization options, and FP32 quality comparisons. See the [Version 2 walkthrough](docs/version-2.md). Version 3 adds a standalone RMSNorm kernel experiment; see the [Version 3 walkthrough](docs/version-3.md). GPU measurements are still pending.
+The Version 1 baseline code is built, with tests and a saved CPU smoke run. Version 2 adds compilation, lower precision, quantization options, and FP32 quality comparisons. See the [Version 2 walkthrough](docs/version-2.md). Version 3 adds a standalone RMSNorm kernel experiment; see the [Version 3 walkthrough](docs/version-3.md). Version 4 adds cached decoding and prompt-length plots; see the [Version 4 walkthrough](docs/version-4.md). Versions 5 and 6 add serving, load testing, and profiling tools. GPU measurements are still pending.
 
 | Implementation | TTFT (ms) | Output tokens/sec | Peak CUDA allocated (GiB) | Speedup |
 | --- | ---: | ---: | ---: | ---: |
@@ -49,6 +49,8 @@ Save timings, metrics, and settings to JSON
 | [optimization.py](src/miniinfer/optimization.py) | Loads precision and quantization variants |
 | [quality.py](src/miniinfer/quality.py) | Compares predictions with eager FP32 |
 | [compare.py](src/miniinfer/compare.py) | Compares matching experiment reports |
+| [generation.py](src/miniinfer/generation.py) | Runs cached and uncached decoding |
+| [cache_sweep.py](src/miniinfer/cache_sweep.py) | Compares caching across prompt lengths |
 | [metrics.py](src/miniinfer/metrics.py) | Calculates latency and throughput summaries |
 | [telemetry.py](src/miniinfer/telemetry.py) | Samples NVIDIA GPU utilization and memory when available |
 | [tests/](tests/) | Checks generation, metric calculations, and the CLI |
@@ -98,26 +100,22 @@ Read the [Version 3 walkthrough](docs/version-3.md) for the formula, kernel desi
 
 ## 6. KV cache
 
-Version 4 will save attention keys and values from earlier tokens so generation can reuse them.
+Version 4 adds an explicit decoding loop that reuses attention keys and values through Hugging Face's `DynamicCache`.
 
 ```text
 Process the prompt once → save K and V
-Generate the next token → reuse earlier K and V
+Process one new token   → reuse earlier K and V
 ```
 
-I'll compare cached and uncached output tokens, then plot latency and memory against prompt length. The planned lengths are 128, 256, 512, 1024, and 2048 tokens, using a model with enough context space for both the prompt and output. GPT-2 cannot cover the full sweep.
+The `--kv-cache` option checks generated-token agreement against the uncached path. A separate `miniinfer-cache-sweep` command compares prompt lengths and saves latency and memory plots. CPU smoke results are saved; pretrained GPU measurements are pending.
+
+Read the [Version 4 walkthrough](docs/version-4.md) for the cache logic, memory formula, and commands. The full 128–2048 prompt-length sweep needs a model with enough room for both prompt and output.
 
 ## 7. Dynamic batching
 
-Version 5 will add an inference server:
+Version 5 adds a FastAPI server with one model worker, a bounded request queue, and dynamic batching. The baseline route runs uncached singleton requests; the optimized route groups compatible requests and uses the KV cache.
 
-```text
-Clients → FastAPI → request queue → dynamic batcher → model → GPU
-```
-
-The planned routes are `/baseline`, `/optimized`, `/benchmark`, and `/metrics`. The batcher will combine waiting requests so the GPU can process them together.
-
-I'll test 1, 10, 50, and 100 concurrent clients, measure queueing time, and check cancellation and overload behavior.
+`miniinfer-load` tests concurrent clients and saves HTTP latency, throughput, failures, queue timings, and telemetry. Read the [Version 5 walkthrough](docs/version-5.md) for the API and local commands.
 
 ## 8. Benchmarks
 
@@ -138,9 +136,9 @@ See [how measurements work](docs/methodology.md) for the exact definitions.
 
 ## 9. Profiling
 
-Version 6 will use PyTorch Profiler, Nsight Systems, and Nsight Compute to explain the timing results.
+Version 6 adds `miniinfer-profile` for separate generation and RMSNorm traces, operator summaries, and observation tables. CPU profiler checks are verified. NVIDIA Nsight capture commands are documented but still need a GPU run.
 
-I'll look at where execution time goes, how many kernels run, and how much memory traffic they create. Profiling runs will be separate from timing runs, since profiling itself can add overhead.
+Read the [Version 6 walkthrough](docs/version-6.md) for how to investigate a bottleneck without confusing profiler overhead with benchmark results.
 
 ## 10. Results
 
