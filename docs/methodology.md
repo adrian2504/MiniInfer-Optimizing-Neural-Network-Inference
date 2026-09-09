@@ -53,7 +53,7 @@ The baseline explicitly uses eager attention, FP32, and no KV cache. CUDA TF32 i
 
 Inputs are repeated or trimmed to a fixed length, every batch item uses the same input, and generation runs for a fixed token count. That makes workloads comparable, but it doesn't represent varied real-world requests.
 
-The random-weight smoke model checks that the code runs. Version 2 quality comparisons use a pretrained model and a separate held-out natural-text dataset supplied with `--eval-text`. They run after performance measurements. See the [Version 2 walkthrough](version-2.md) for the loss calculation and sampling limits.
+The random-weight smoke model checks that the code runs. It is useful for workflow tests and charts, but it should not be used for model-quality or final performance claims. Version 2 quality comparisons use a pretrained model and a separate held-out natural-text dataset supplied with `--eval-text`. They run after performance measurements. See the [Version 2 walkthrough](version-2.md) for the loss calculation and sampling limits.
 
 ## Version 2 startup and compilation
 
@@ -66,6 +66,8 @@ Schema Version 2 adds optimization, startup, and optional quality fields. Rerun 
 `miniinfer-kernel` writes a separate report schema for RMSNorm. It checks every requested implementation against an FP64 oracle before timing. First-call compilation and warmup are excluded from steady-state samples. CUDA uses events; CPU uses wall-clock timing. Each sample averages repeated calls, so p95 describes those averages, not individual requests. Inputs are reused without a cache flush, outputs are allocated per call, and measurement order is shuffled with a fixed seed.
 
 RMSNorm speedup is eager median operation time divided by candidate median operation time for the same shape, dtype, and input. These numbers cannot be substituted into the transformer generation table. See [Version 3](version-3.md) for the full protocol and tolerances.
+
+CUDA correctness and CUDA speed are recorded separately. Passing the Triton CUDA tests means the kernel agrees with the reference on that GPU. A speedup needs a saved `miniinfer-kernel` timing report with repeated runs.
 
 ## Version 4 cache comparisons
 

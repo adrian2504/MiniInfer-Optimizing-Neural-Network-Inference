@@ -2,7 +2,7 @@
 
 This version adds a cached generation loop and a prompt-length sweep. I want to see how avoiding repeated work changes latency, and how much memory the cache needs.
 
-The implementation and CPU checks are in place. The saved smoke sweep uses random weights; pretrained GPU results are still pending.
+The implementation and CPU checks are in place. Cached CUDA parity also passed on a Runpod RTX 4090. The saved smoke sweep uses random weights; repeated pretrained GPU results are still pending.
 
 ## What changes during generation?
 
@@ -123,6 +123,12 @@ The initial prompt still needs a full forward pass, so caching mainly targets la
 ## Saved local check
 
 The [CPU smoke sweep](../results/cache-smoke-cpu/sweep.json) covers prompt lengths 8, 32, and 128 with four output tokens. Its [latency plot](../results/cache-smoke-cpu/latency.png) and [memory plot](../results/cache-smoke-cpu/memory.png) demonstrate the workflow. They use a tiny random GPT-2 and aren't pretrained GPU performance results.
+
+## Saved CUDA check
+
+On the Runpod RTX 4090, the cached CUDA parity tests passed for both small GPT-2 and small Llama-style models. This check is important because it verifies that cached decoding returns the same greedy tokens as the uncached path on CUDA.
+
+This is still a correctness result, not a performance result. The real Version 4 benchmark is the prompt-length sweep on a pretrained model.
 
 ## Code to read
 

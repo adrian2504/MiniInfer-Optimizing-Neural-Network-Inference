@@ -2,7 +2,7 @@
 
 This version implements RMSNorm three ways: PyTorch, compiled PyTorch, and Triton. It has its own benchmark so I can study one operation before changing a whole model.
 
-The code is built. CPU checks can run locally; Triton correctness and GPU performance still need an NVIDIA GPU. There are no measured GPU speedups yet.
+The code is built. I verified Triton correctness on a Runpod RTX 4090. GPU performance timing still needs a repeated benchmark run before I claim a speedup.
 
 ## What is RMSNorm?
 
@@ -128,13 +128,24 @@ This measures an RMSNorm operation. It doesn't measure tokens/sec, model memory 
 
 ## Results
 
+CUDA validation:
+
+| Check | Result |
+| --- | --- |
+| GPU | NVIDIA GeForce RTX 4090 |
+| PyTorch / Triton | PyTorch 2.8.0+cu128, Triton 3.4.0 |
+| Native BF16 | Yes |
+| CUDA RMSNorm tests | 21 passed |
+
+This proves the Triton kernel matched the reference on the tested shapes and dtypes. It is not a speed benchmark.
+
 | Implementation | GPU median operation time | Speedup vs eager |
 | --- | ---: | ---: |
 | PyTorch | — | — |
 | Compiled PyTorch | — | — |
 | Triton | — | — |
 
-I'll fill this in from saved runs on a named GPU, for a stated shape and dtype. Speedup is eager median time divided by candidate median time. There isn't one speedup that describes every input size.
+I'll fill the timing table from saved repeated runs on a named GPU, for a stated shape and dtype. Speedup is eager median time divided by candidate median time. There isn't one speedup that describes every input size.
 
 ## Code to read
 

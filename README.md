@@ -4,9 +4,9 @@
 
 **How fast can I make transformer inference?**
 
-I'm building this project to understand what happens when a transformer generates tokens, where the time and memory go, and which changes actually make it faster. I'll start with a simple PyTorch baseline and work through each optimization one at a time.
+I'm building this project to understand what happens when a transformer generates tokens, where the time and memory go, and which changes actually make it faster. I started with a simple PyTorch baseline and then added one systems idea at a time.
 
-The Version 1 baseline code is built, with tests and a saved CPU smoke run. Version 2 adds compilation, lower precision, quantization options, and FP32 quality comparisons. See the [Version 2 walkthrough](docs/version-2.md). Version 3 adds a standalone RMSNorm kernel experiment; see the [Version 3 walkthrough](docs/version-3.md). Version 4 adds cached decoding and prompt-length plots; see the [Version 4 walkthrough](docs/version-4.md). Versions 5 and 6 add serving, load testing, and profiling tools. GPU measurements are still pending.
+The repo now has six versions built: baseline inference, precision/compile/quantization options, an RMSNorm kernel experiment, KV cache decoding, a small inference server, and profiling tools. I also verified the CUDA-specific tests on a Runpod RTX 4090. The main thing still missing is a full pretrained-model GPU benchmark table with repeated performance runs.
 
 | Implementation | TTFT (ms) | Output tokens/sec | Peak CUDA allocated (GiB) | Speedup |
 | --- | ---: | ---: | ---: | ---: |
@@ -16,7 +16,7 @@ The Version 1 baseline code is built, with tests and a saved CPU smoke run. Vers
 | INT8 / INT4 | — | — | — | — |
 | Triton, integrated into a model | — | — | — | — |
 
-The table is for measured GPU results. Empty cells mean the experiment hasn't been recorded yet. Speedup will compare output tokens/sec against the FP32 baseline on the same workload and GPU. Individual kernel timings will have their own table.
+This table is only for repeated pretrained GPU performance results. I leave cells blank until I run that exact experiment. CUDA correctness is already verified, but correctness tests are not the same thing as speedup numbers.
 
 ## 1. Motivation
 
@@ -144,7 +144,18 @@ Read the [Version 6 walkthrough](docs/version-6.md) for how to investigate a bot
 
 The saved [CPU smoke run](results/smoke-cpu.json) used a tiny randomly initialized GPT-2 on an Apple Silicon CPU, with 16 input tokens and 4 generated tokens across 3 measured runs.
 
-That checks the benchmark workflow. It doesn't establish pretrained-model quality or GPU performance. No NVIDIA benchmark results are recorded yet.
+That checks the benchmark workflow. It doesn't establish pretrained-model quality or GPU performance.
+
+The CUDA validation was run on a Runpod RTX 4090:
+
+| Check | Result |
+| --- | --- |
+| GPU-specific tests | 23 passed |
+| Full test suite | 116 passed, 2 dependency warnings |
+| PyTorch / Triton | PyTorch 2.8.0+cu128, Triton 3.4.0 |
+| BF16 | Native BF16 supported |
+
+Those tests prove the CUDA paths work: Triton RMSNorm correctness and cached CUDA generation parity both passed. They don't claim an end-to-end inference speedup yet. That comes from the next real benchmark run.
 
 ## 11. Lessons learned
 
@@ -154,6 +165,8 @@ The baseline makes a few things clear:
 - Tokens/sec needs the total token count divided by total generation time.
 - CUDA tensor allocations and whole-device memory use measure different things.
 - A tiny smoke test is useful for checking code, but performance comparisons need a fixed, realistic workload.
+- A passing GPU test tells me the CUDA code is correct on that machine, but it is not a benchmark by itself.
+- Dynamic batching helped the CPU smoke server under higher concurrency, but the result is still a workflow check because it used a tiny random model.
 
 I'll add what I learn from each experiment as I go.
 
