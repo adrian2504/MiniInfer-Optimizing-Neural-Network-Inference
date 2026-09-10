@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MiniInfer Results Dashboard</title>
+    <style>
+      :root {
+        --bg: #f7f8fb;
+        --panel: #ffffff;
+        --ink: #172033;
+        --muted: #5e6a7d;
+        --line: #dfe5ef;
+        --blue: #2563eb;
+        --green: #059669;
+        --orange: #d97706;
+        --red: #dc2626;
+        --code: #101828;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+
+      main {
+        width: min(1180px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 36px 0 56px;
+      }
+
+      header {
+        margin-bottom: 22px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        line-height: 1.15;
+      }
+
+      h1 {
+        font-size: clamp(32px, 5vw, 56px);
+        letter-spacing: -0.02em;
+      }
+
+      h2 {
+        font-size: 24px;
+        margin-bottom: 14px;
+      }
+
+      h3 {
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+
+      p {
+        margin: 8px 0 0;
+        color: var(--muted);
+      }
+
+      .eyebrow {
+        margin-bottom: 8px;
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+        gap: 18px;
+        align-items: stretch;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      section {
+        margin-top: 22px;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: #fbfdff;
+      }
+
+      .metric .label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .metric .value {
+        margin-top: 6px;
+        font-size: 26px;
+        font-weight: 800;
+      }
+
+      .metric .hint {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: #334155;
+        background: #f8fafc;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .tag.green {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .tag.orange {
+        background: #ffedd5;
+        color: #9a3412;
+      }
+
+      .note {
+        border-left: 4px solid var(--blue);
+        padding: 12px 14px;
+        background: #eff6ff;
+        color: #1e3a8a;
+        border-radius: 8px;
+        margin-top: 14px;
+      }
+
+      .note strong {
+        color: #1d4ed8;
+      }
+
+      .chart-box {
+        overflow: hidden;
+      }
+
+      .chart-box img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+      }
+
+      pre {
+        margin: 0;
+        padding: 16px;
+        overflow: auto;
+        border-radius: 8px;
+        background: var(--code);
+        color: #e5e7eb;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+
+      .terminal {
+        color: #d1fae5;
+      }
+
+      .terminal .dim {
+        color: #9ca3af;
+      }
+
+      .footer-note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 900px) {
+        .hero,
+        .grid.two,
+        .grid.three,
+        .metric-grid,
+        .metric-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <div class="panel">
+          <div class="eyebrow">MiniInfer results dashboard</div>
+          <h1>Transformer inference, measured one step at a time.</h1>
+          <p>
+            This page collects the local smoke results, Runpod RTX 4090 validation, KV-cache analysis,
+            server load results, and the main project evidence in one place.
+          </p>
+          <div class="note">
+            <strong>Important:</strong> the CPU smoke runs prove the workflow and concepts. The RTX 4090 validation proves
+            the CUDA paths work. The real GPU speedup table still needs repeated pretrained-model benchmark runs.
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Runpod RTX 4090 validation</h2>
+          <div class="metric-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+            <div class="metric">
+              <div class="label">CUDA tests</div>
+              <div class="value">23</div>
+              <div class="hint">passed</div>
+            </div>
+            <div class="metric">
+              <div class="label">Full suite</div>
+              <div class="value">116</div>
+              <div class="hint">passed</div>
+            </div>
+            <div class="metric">
+              <div class="label">GPU</div>
+              <div class="value" style="font-size: 18px;">RTX 4090</div>
+              <div class="hint">Runpod</div>
+            </div>
+            <div class="metric">
+              <div class="label">BF16</div>
+              <div class="value">Yes</div>
+              <div class="hint">native support</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="grid two">
+        <div class="panel">
+          <h2>Baseline Smoke Result</h2>
+          <p>Apple Silicon MacBook - CPU smoke experiment. Tiny random GPT-2, used to test the benchmark workflow.</p>
+          <div class="metric-grid" id="baselineMetrics"></div>
+          <div style="margin-top: 16px;" id="baselineConfig"></div>
+        </div>
+
+        <div class="panel">
+          <h2>RTX 4090 Validation Log</h2>
+          <p>The CUDA validation was run on Runpod with an NVIDIA GeForce RTX 4090.</p>
+          <pre class="terminal"><code>root@runpod:/workspace/MiniInfer# nvidia-smi
+GPU: NVIDIA GeForce RTX 4090
+Driver: 570.172.08    CUDA: 12.8
+
+root@runpod:/workspace/MiniInfer# python -m pytest -v \
+  tests/test_rmsnorm.py::test_triton_against_reference_on_cuda \
+  tests/test_cache.py::test_cached_cuda_parity
+
+23 passed in 67.79s
+
+root@runpod:/workspace/MiniInfer# MINIINFER_TEST_COMPILE=1 python -m pytest -q
+116 passed, 2 warnings in 1371.71s</code></pre>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Runpod CUDA Analysis</h2>
+        <p>
+          This validation was run on a Runpod pod with an NVIDIA GeForce RTX 4090. It checks that the CUDA-specific
+          code paths work on real NVIDIA hardware.
+        </p>
+        <div class="grid two" style="margin-top: 16px;">
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>GPU</td>
+                  <td>NVIDIA GeForce RTX 4090</td>
+                </tr>
+                <tr>
+                  <td>Driver / CUDA</td>
+                  <td>570.172.08 / CUDA 12.8</td>
+                </tr>
+                <tr>
+                  <td>PyTorch</td>
+                  <td>2.8.0+cu128</td>
+                </tr>
+                <tr>
+                  <td>Triton</td>
+                  <td>3.4.0</td>
+                </tr>
+                <tr>
+                  <td>Native BF16</td>
+                  <td>Supported</td>
+                </tr>
+                <tr>
+                  <td>Commit tested</td>
+                  <td><code>d9630bf585a3512c5aec7f26a103ec0f7e889e73</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Run</th>
+                  <th>Result</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>CUDA-specific tests</td>
+                  <td><span class="tag green">23 passed</span></td>
+                  <td>Triton RMSNorm and cached CUDA parity worked on the RTX 4090.</td>
+                </tr>
+                <tr>
+                  <td>RMSNorm CUDA cases</td>
+                  <td><span class="tag green">21 passed</span></td>
+                  <td>FP32, FP16, and BF16 Triton outputs matched the reference on tested shapes.</td>
+                </tr>
+                <tr>
+                  <td>Cached CUDA parity</td>
+                  <td><span class="tag green">2 passed</span></td>
+                  <td>Cached decoding matched uncached decoding for small GPT-2 and Llama-style models.</td>
+                </tr>
+                <tr>
+                  <td>Full suite</td>
+                  <td><span class="tag green">116 passed</span></td>
+                  <td>The complete project test suite passed in the CUDA Linux environment.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="note">
+          <strong>Analysis:</strong> this proves the CUDA implementation is correct on the tested RTX 4090 setup.
+          It does not prove an end-to-end speedup yet. The next step is repeated pretrained GPU benchmarks with the
+          same model, prompt length, output length, batch size, and model revision.
+        </div>
+        <p class="footer-note">
+          Full Runpod artifacts were saved at
+          <code>/workspace/MiniInfer/results/cuda-validation/</code> on the pod:
+          <code>summary.json</code>, <code>gpu-tests.log</code>, <code>full-tests.log</code>,
+          <code>nvidia-smi.txt</code>, and <code>pip-freeze.txt</code>.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>KV Cache Analysis</h2>
+        <p>Apple Silicon MacBook - CPU smoke experiment. This compares cached vs uncached decoding across prompt lengths.</p>
+        <div class="grid two" style="margin-top: 16px;">
+          <div>
+            <div id="cacheTable"></div>
+          </div>
+          <div class="chart-box">
+            <img src="cache-smoke-cpu/latency.png" alt="KV cache latency chart" />
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Server Load Analysis</h2>
+        <p>CPU smoke server. The optimized route uses request queueing, compatible dynamic batching, and KV cache.</p>
+        <div id="serverTable" style="margin-top: 16px;"></div>
+      </section>
+
+      <section class="grid two">
+        <div class="panel">
+          <h2>Triton RMSNorm Kernel</h2>
+          <p>This is the custom Triton RMSNorm path used by the kernel validation tests.</p>
+          <pre><code> @triton.jit
+ def _rmsnorm(X, W, Y, WIDTH: tl.constexpr, EPS: tl.constexpr, BLOCK: tl.constexpr):
+     row = tl.program_id(0)
+     column = tl.arange(0, BLOCK)
+     valid = column &lt; WIDTH
+
+     values = tl.load(X + row * WIDTH + column, mask=valid, other=0).to(tl.float32)
+     weights = tl.load(W + column, mask=valid, other=0).to(tl.float32)
+
+     mean_square = tl.sum(values * values, axis=0) / WIDTH
+     normalized = values * tl.rsqrt(mean_square + EPS)
+
+     tl.store(Y + row * WIDTH + column, normalized * weights, mask=valid)</code></pre>
+        </div>
+
+        <div class="panel">
+          <h2>Validation Chart</h2>
+          <p>Summary of the CUDA-specific and full-suite validation runs.</p>
+          <div class="chart-box" style="margin-top: 16px;">
+            <img src="../docs/assets/research-validation-tests.png" alt="Runpod validation chart" />
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>What This Proves</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Evidence</th>
+              <th>Claim supported</th>
+              <th>Claim not supported yet</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag green">RTX 4090 tests passed</span></td>
+              <td>CUDA paths, Triton RMSNorm correctness, and cached CUDA parity work on NVIDIA hardware.</td>
+              <td>End-to-end GPU speedup.</td>
+            </tr>
+            <tr>
+              <td><span class="tag">CPU smoke benchmark</span></td>
+              <td>The benchmark can measure TTFT, latency, throughput, memory fields, and reproducibility metadata.</td>
+              <td>Pretrained model quality or production GPU performance.</td>
+            </tr>
+            <tr>
+              <td><span class="tag orange">Server load smoke</span></td>
+              <td>The server routes, queueing, batching, and load-test reporting work.</td>
+              <td>Production serving capacity.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="footer-note">
+          Next step: run repeated pretrained GPU benchmarks and fill the README speedup table with real numbers.
+        </p>
+      </section>
+    </main>
+
+    <script>
+      const fmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+
+      function ms(value) {
+        return value == null ? "n/a" : `${fmt.format(value)} ms`;
+      }
+
+      function rate(value) {
+        return value == null ? "n/a" : fmt.format(value);
+      }
+
+      function bytes(value) {
+        if (value == null) return "n/a";
+        if (value === 0) return "0 B";
+        const units = ["B", "KiB", "MiB", "GiB"];
+        let index = 0;
+        let current = value;
+        while (current >= 1024 && index < units.length - 1) {
+          current /= 1024;
+          index += 1;
+        }
+        return `${fmt.format(current)} ${units[index]}`;
+      }
+
+      function table(headers, rows) {
+        return `
+          <table>
+            <thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead>
+            <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}</tbody>
+          </table>
+        `;
+      }
+
+      async function getJson(path) {
+        const response = await fetch(path);
+        if (!response.ok) throw new Error(`Could not load ${path}`);
+        return response.json();
+      }
+
+      async function renderBaseline() {
+        const report = await getJson("smoke-cpu.json");
+        const summary = report.summary;
+        const config = report.config;
+        const memory = report.memory;
+
+        document.querySelector("#baselineMetrics").innerHTML = [
+          ["TTFT", ms(summary.ttft_median_ms), "median"],
+          ["p50 latency", ms(summary.latency_p50_ms), "generation"],
+          ["tokens/sec", rate(summary.output_tokens_per_second), "output"],
+          ["peak CUDA", bytes(memory.peak_cuda_allocated_bytes), "not available on CPU"],
+        ].map(([label, value, hint]) => `
+          <div class="metric">
+            <div class="label">${label}</div>
+            <div class="value">${value}</div>
+            <div class="hint">${hint}</div>
+          </div>
+        `).join("");
+
+        document.querySelector("#baselineConfig").innerHTML = table(
+          ["Config", "Value"],
+          [
+            ["Device", config.device],
+            ["Prompt tokens", config.prompt_tokens],
+            ["New tokens", config.new_tokens],
+            ["Runs / warmup", `${config.runs} / ${config.warmup}`],
+            ["Model", report.model.id],
+            ["Smoke only", String(report.smoke_only)],
+          ],
+        );
+      }
+
+      async function renderCache() {
+        const sweep = await getJson("cache-smoke-cpu/sweep.json");
+        const rows = sweep.cases.map((item) => {
+          const c = item.cached.summary;
+          const u = item.uncached.summary;
+          const speedup = item.comparison.latency_speedup;
+          return [
+            item.prompt_tokens,
+            ms(u.latency_p50_ms),
+            ms(c.latency_p50_ms),
+            `${fmt.format(speedup)}x`,
+            bytes(item.cached.cache.tensor_bytes),
+          ];
+        });
+        document.querySelector("#cacheTable").innerHTML = table(
+          ["Prompt tokens", "No cache p50", "KV cache p50", "Latency speedup", "Final K/V bytes"],
+          rows,
+        );
+      }
+
+      async function renderServer() {
+        const baseline = await getJson("server-smoke-cpu/baseline.json");
+        const optimized = await getJson("server-smoke-cpu/optimized.json");
+        const byConcurrency = new Map();
+        for (const item of baseline.cases) byConcurrency.set(item.concurrency, { baseline: item });
+        for (const item of optimized.cases) {
+          const record = byConcurrency.get(item.concurrency) || {};
+          record.optimized = item;
+          byConcurrency.set(item.concurrency, record);
+        }
+        const rows = [...byConcurrency.entries()].map(([concurrency, record]) => {
+          const b = record.baseline;
+          const o = record.optimized;
+          const ratio = o.successful_requests_per_second / b.successful_requests_per_second;
+          return [
+            concurrency,
+            rate(b.successful_requests_per_second),
+            rate(o.successful_requests_per_second),
+            `${fmt.format(ratio)}x`,
+            ms(b.successful_latency_ms.p95),
+            ms(o.successful_latency_ms.p95),
+          ];
+        });
+        document.querySelector("#serverTable").innerHTML = table(
+          ["Concurrency", "Baseline req/s", "Optimized req/s", "Throughput ratio", "Baseline p95", "Optimized p95"],
+          rows,
+        );
+      }
+
+      async function main() {
+        await Promise.all([renderBaseline(), renderCache(), renderServer()]);
+      }
+
+      main().catch((error) => {
+        document.body.innerHTML = `<main><div class="panel"><h1>Dashboard failed to load</h1><p>${error.message}</p></div></main>`;
+      });
+    </script>
+  </body>
+</html>
