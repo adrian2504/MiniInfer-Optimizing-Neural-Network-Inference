@@ -2,7 +2,6 @@
 
 ### Optimizing transformer inference from PyTorch → Triton → CUDA
 
-**How fast can I make transformer inference?**
 
 I'm building this project to understand what happens when a transformer generates tokens, where the time and memory go, and which changes actually make it faster. I started with a simple PyTorch baseline and then added one systems idea at a time.
 
